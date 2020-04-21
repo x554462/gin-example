@@ -35,7 +35,7 @@ func (d *Dao) GetDaoSession() *DaoSession {
 	return d.daoSession
 }
 
-func checkError(err error) {
+func (d *Dao) CheckError(err error) {
 	if err != nil {
 		exception.ThrowMsgWithCallerDepth(err.Error(), exception.ModelRuntimeError, 3)
 	}
@@ -52,7 +52,7 @@ func (d *Dao) newEmptyModel() ModelInterface {
 	return model
 }
 
-func (d *Dao) getTableName() string {
+func (d *Dao) GetTableName() string {
 	return d.tableName
 }
 
@@ -84,8 +84,8 @@ func (d *Dao) Select(forUpdate bool, indexes ...interface{}) ModelInterface {
 		daoSession = d.GetDaoSession()
 		row        *sql.Rows
 	)
-	cond, vals, err := builder.BuildSelect(d.getTableName(), d.buildWhere(indexes...), nil)
-	checkError(err)
+	cond, vals, err := builder.BuildSelect(d.GetTableName(), d.buildWhere(indexes...), nil)
+	d.CheckError(err)
 	if forUpdate {
 		if daoSession.tx == nil {
 			exception.ThrowMsg("Attempt to load for update out of transaction", exception.ModelRuntimeError)
@@ -102,16 +102,16 @@ func (d *Dao) Select(forUpdate bool, indexes ...interface{}) ModelInterface {
 			row, err = sqldb.GetSlaveDB().Query(cond, vals...)
 		}
 	}
-	checkError(err)
+	d.CheckError(err)
 	defer row.Close()
 	return d.CreateOne(row)
 }
 
 func (d *Dao) Insert(data map[string]interface{}) ModelInterface {
-	cond, vals, err := builder.BuildInsert(d.getTableName(), []map[string]interface{}{data})
-	checkError(err)
+	cond, vals, err := builder.BuildInsert(d.GetTableName(), []map[string]interface{}{data})
+	d.CheckError(err)
 	result, err := d.GetDaoSession().Exec(cond, vals...)
-	checkError(err)
+	d.CheckError(err)
 	if affected, _ := result.RowsAffected(); affected != 1 {
 		exception.ThrowMsg("dao.Insert error", exception.ModelRuntimeError)
 	}
@@ -121,16 +121,16 @@ func (d *Dao) Insert(data map[string]interface{}) ModelInterface {
 		}
 	}
 	var m = d.newEmptyModel()
-	checkError(utils.ScanStruct(data, m, defaultTagName))
+	d.CheckError(utils.ScanStruct(data, m, defaultTagName))
 	d.save(m)
 	return m
 }
 
 func (d *Dao) Update(model ModelInterface, data map[string]interface{}) int64 {
-	cond, vals, err := builder.BuildUpdate(d.getTableName(), d.buildWhere(model.GetIndexValues()...), data)
-	checkError(err)
+	cond, vals, err := builder.BuildUpdate(d.GetTableName(), d.buildWhere(model.GetIndexValues()...), data)
+	d.CheckError(err)
 	result, err := d.GetDaoSession().Exec(cond, vals...)
-	checkError(err)
+	d.CheckError(err)
 	affected, _ := result.RowsAffected()
 	if affected == 1 {
 		utils.ScanStruct(data, model, defaultTagName)
@@ -140,43 +140,43 @@ func (d *Dao) Update(model ModelInterface, data map[string]interface{}) int64 {
 }
 
 func (d *Dao) Remove(model ModelInterface) {
-	cond, vals, err := builder.BuildDelete(d.getTableName(), d.buildWhere(model.GetIndexValues()...))
-	checkError(err)
+	cond, vals, err := builder.BuildDelete(d.GetTableName(), d.buildWhere(model.GetIndexValues()...))
+	d.CheckError(err)
 	_, err = d.GetDaoSession().Exec(cond, vals...)
-	checkError(err)
+	d.CheckError(err)
 }
 
 func (d *Dao) SelectOne(useSlave bool, where map[string]interface{}) ModelInterface {
-	cond, vals, err := builder.BuildSelect(d.getTableName(), where, nil)
-	checkError(err)
+	cond, vals, err := builder.BuildSelect(d.GetTableName(), where, nil)
+	d.CheckError(err)
 	var row *sql.Rows
 	if useSlave {
 		row, err = sqldb.GetSlaveDB().Query(cond, vals...)
 	} else {
 		row, err = d.GetDaoSession().Query(cond, vals...)
 	}
-	checkError(err)
+	d.CheckError(err)
 	defer row.Close()
 	return d.CreateOne(row)
 }
 
 func (d *Dao) SelectMulti(useSlave bool, where map[string]interface{}) []ModelInterface {
-	cond, vals, err := builder.BuildSelect(d.getTableName(), where, nil)
-	checkError(err)
+	cond, vals, err := builder.BuildSelect(d.GetTableName(), where, nil)
+	d.CheckError(err)
 	var row *sql.Rows
 	if useSlave {
 		row, err = sqldb.GetSlaveDB().Query(cond, vals...)
 	} else {
 		row, err = d.GetDaoSession().Query(cond, vals...)
 	}
-	checkError(err)
+	d.CheckError(err)
 	defer row.Close()
 	return d.CreateMulti(row)
 }
 
 func (d *Dao) CreateOne(row *sql.Rows) ModelInterface {
 	columns, err := row.Columns()
-	checkError(err)
+	d.CheckError(err)
 	length := len(columns)
 	values := make([]interface{}, length, length)
 	for i := 0; i < length; i++ {
@@ -184,13 +184,13 @@ func (d *Dao) CreateOne(row *sql.Rows) ModelInterface {
 	}
 	for row.Next() {
 		err = row.Scan(values...)
-		checkError(err)
+		d.CheckError(err)
 		mp := make(map[string]interface{})
 		for idx, name := range columns {
 			mp[name] = *(values[idx].(*interface{}))
 		}
 		model := d.newEmptyModel()
-		checkError(utils.ScanStruct(mp, model, defaultTagName))
+		d.CheckError(utils.ScanStruct(mp, model, defaultTagName))
 		d.save(model)
 		return model
 	}
@@ -201,7 +201,7 @@ func (d *Dao) CreateOne(row *sql.Rows) ModelInterface {
 func (d *Dao) CreateMulti(rows *sql.Rows) []ModelInterface {
 	modelIs := make([]ModelInterface, 0)
 	columns, err := rows.Columns()
-	checkError(err)
+	d.CheckError(err)
 	length := len(columns)
 	values := make([]interface{}, length, length)
 	for i := 0; i < length; i++ {
@@ -209,13 +209,13 @@ func (d *Dao) CreateMulti(rows *sql.Rows) []ModelInterface {
 	}
 	for rows.Next() {
 		err = rows.Scan(values...)
-		checkError(err)
+		d.CheckError(err)
 		mp := make(map[string]interface{})
 		for idx, name := range columns {
 			mp[name] = *(values[idx].(*interface{}))
 		}
 		model := d.newEmptyModel()
-		checkError(utils.ScanStruct(mp, model, defaultTagName))
+		d.CheckError(utils.ScanStruct(mp, model, defaultTagName))
 		d.save(model)
 		modelIs = append(modelIs, model)
 	}

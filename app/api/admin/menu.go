@@ -19,7 +19,7 @@ func GetMenu(c *gin.Context) {
 	role := userD.GetRole(user)
 
 	var data = make(map[int][]interface{})
-	for _, v := range authD.SelectMenuByRole(role) {
+	for _, v := range authD.SelectByRoleAndType(role, model.AdminAuthTypeMenu) {
 		auth := v.(*model.AdminAuth)
 		item := map[string]interface{}{
 			"name": auth.Name,

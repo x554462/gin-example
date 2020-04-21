@@ -19,6 +19,8 @@ func InitRouter() *gin.Engine {
 	r.Use(mango.New())
 	{
 		r.GET("/admin/menu", admin.GetMenu)
+		r.GET("/admin/user/list", admin.GetUserList)
+		r.POST("/admin/user/login", admin.PostUserLogin)
 	}
 	return r
 }

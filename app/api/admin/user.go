@@ -12,8 +12,8 @@ import (
 func PostUserLogin(c *gin.Context) {
 	ctrl := mango.Default(c)
 	var param struct {
-		Account  string `validate:"varchar=用户名,5,32"`
-		Passport string `validate:"varchar=密码,40,40"`
+		Account  string `json:"account" validate:"varchar=用户名,5,32"`
+		Passport string `json:"passport" validate:"varchar=密码,40,40"`
 	}
 	ctrl.ParsePost(&param)
 	adminUserD := dao.NewAdminUserDao(ctrl.GetDaoSession())
@@ -29,7 +29,23 @@ func PostUserLogin(c *gin.Context) {
 func GetUserList(c *gin.Context) {
 	ctrl := mango.Default(c)
 	var page struct {
-		PageName int `validate:"interge"`
-		PageSize int
+		PageNum  int `json:"page_num" validate:"integer=页码,1,2000"`
+		PageSize int `json:"page_size" validate:"integer=单页数量,5,50"`
 	}
+	ctrl.ParsePost(&page)
+
+	adminUserD := dao.NewAdminUserDao(ctrl.GetDaoSession())
+
+	var data []interface{}
+	for _, v := range adminUserD.SelectByPage(uint(page.PageNum), uint(page.PageSize)) {
+		user := v.(*model.AdminUser)
+		data = append(data, map[string]interface{}{
+			"id":      user.Id,
+			"account": user.Account,
+			"name":    user.Name,
+			"role":    adminUserD.GetRole(user).Name,
+		})
+	}
+
+	ctrl.JsonResponse(map[string]interface{}{"data": data})
 }
