@@ -36,7 +36,7 @@ func GetUserList(c *gin.Context) {
 
 	adminUserD := dao.NewAdminUserDao(ctrl.GetDaoSession())
 
-	var data []interface{}
+	var data = make([]interface{}, 0)
 	for _, v := range adminUserD.SelectByPage(uint(page.PageNum), uint(page.PageSize)) {
 		user := v.(*model.AdminUser)
 		data = append(data, map[string]interface{}{
