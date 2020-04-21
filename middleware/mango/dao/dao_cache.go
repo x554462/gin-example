@@ -83,7 +83,7 @@ func newDaoLru(capacity int) *DaoLruCache {
 
 func (lru *DaoLruCache) Clear() {
 	lru.elements = make(map[string]*element, lru.used)
-	lru.list = list.New()
+	lru.list.Init()
 	lru.used = 0
 }
 

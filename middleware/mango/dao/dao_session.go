@@ -11,14 +11,20 @@ import (
 
 const daoModelLruCacheSize = 50
 
+var daoSessionPool = sync.Pool{
+	New: func() interface{} {
+		return &DaoSession{daoModelCache: newDaoLru(daoModelLruCacheSize)}
+	},
+}
+
 type DaoSession struct {
 	tx            *sql.Tx
 	daoMap        sync.Map
 	daoModelCache *DaoLruCache
 }
 
-func NewDaoSession() *DaoSession {
-	return &DaoSession{daoModelCache: newDaoLru(daoModelLruCacheSize)}
+func GetDaoSession() *DaoSession {
+	return daoSessionPool.Get().(*DaoSession)
 }
 
 func (ds *DaoSession) GetDao(model ModelInterface, daoInterface Interface) Interface {
@@ -72,6 +78,9 @@ func (ds *DaoSession) Close() {
 		ds.RollbackTransaction()
 		ds.tx = nil
 	}
+	ds.daoMap = sync.Map{}
+	ds.daoModelCache.Clear()
+	daoSessionPool.Put(ds)
 }
 
 func (ds *DaoSession) Query(query string, args ...interface{}) (*sql.Rows, error) {

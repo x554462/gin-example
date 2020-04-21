@@ -5,17 +5,15 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
+	"github.com/x554462/gin-example/middleware/mango/dao"
 	"github.com/x554462/gin-example/middleware/mango/library/exception"
 	"github.com/x554462/gin-example/middleware/mango/library/logging"
 	"github.com/x554462/gin-example/middleware/mango/library/utils"
-	"github.com/x554462/gin-example/middleware/mango/dao"
 	"github.com/x554462/gin-example/middleware/mango/validator"
 	"net/http"
 )
 
-const DefaultKey = "middleware/mango/frame"
-
-var firstPanicOffset = 0
+const DefaultKey = "middleware/mango"
 
 type Controller struct {
 	ginCtx           *gin.Context
@@ -35,7 +33,7 @@ func New() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		session := newSession(c.Request, c.Writer)
 		defer session.expiry()
-		daoSession := dao.NewDaoSession()
+		daoSession := dao.GetDaoSession()
 		defer daoSession.Close()
 		ctrl := &Controller{ginCtx: c, daoSession: daoSession, session: session}
 		defer func() {
@@ -70,6 +68,7 @@ func New() gin.HandlerFunc {
 		}()
 		c.Set(DefaultKey, ctrl)
 		c.Next()
+		ctrl.JsonResponse(nil)
 	}
 }
 

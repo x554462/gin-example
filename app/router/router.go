@@ -5,7 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"github.com/swaggo/gin-swagger/swaggerFiles"
-	"github.com/x554462/gin-example/app/api"
+	"github.com/x554462/gin-example/app/api/admin"
 	_ "github.com/x554462/gin-example/docs"
 	"github.com/x554462/gin-example/middleware/mango"
 )
@@ -18,8 +18,7 @@ func InitRouter() *gin.Engine {
 	}
 	r.Use(mango.New())
 	{
-		r.GET("/api/:id", api.TestGet)
-		r.POST("/api/:id", api.TestPost)
+		r.GET("/admin/menu", admin.GetMenu)
 	}
 	return r
 }
