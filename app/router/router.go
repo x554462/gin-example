@@ -19,8 +19,16 @@ func InitRouter() *gin.Engine {
 	r.Use(mango.New())
 	{
 		r.GET("/admin/menu", admin.GetMenu)
-		r.GET("/admin/user/list", admin.GetUserList)
 		r.POST("/admin/user/login", admin.PostUserLogin)
+		r.GET("/admin/user/list", admin.GetUserList)
+		r.GET("/admin/user/list/:userId", admin.GetUserById)
+		r.POST("/admin/user/add", admin.PostUserAdd)
+		r.POST("/admin/user/save/:userId", admin.PostUserSave)
+		r.GET("/admin/role/list", admin.GetRoleList)
+		r.GET("/admin/role/list/:roleId", admin.GetRoleById)
+		r.POST("/admin/role/add", admin.PostRoleAdd)
+		r.POST("/admin/role/save/:roleId", admin.PostRoleSave)
+
 	}
 	return r
 }

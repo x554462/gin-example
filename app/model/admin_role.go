@@ -10,7 +10,7 @@ type AdminRole struct {
 	Id         int    `db:"id"`
 	Name       string `db:"name"`
 	Describe   string `db:"describe"`
-	CreateTime int    `db:"create_time"`
+	CreateTime int64  `db:"create_time"`
 }
 
 func (this *AdminRole) GetIndexValues() []interface{} {
