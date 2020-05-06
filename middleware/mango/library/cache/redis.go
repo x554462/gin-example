@@ -60,6 +60,9 @@ func (r *RedisClient) HDel(key string, field ...string) error {
 }
 
 func (r *RedisClient) Del(keys ...string) error {
-	r.client.Context()
 	return r.client.Del(keys...).Err()
+}
+
+func (r *RedisClient) Client() *redis.Client {
+	return r.client
 }

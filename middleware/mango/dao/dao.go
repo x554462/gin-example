@@ -99,7 +99,7 @@ func (d *Dao) Select(forUpdate bool, indexes ...interface{}) ModelInterface {
 		} else if daoSession.tx != nil {
 			row, err = daoSession.Query(cond, vals...)
 		} else {
-			row, err = sqldb.GetSlaveDB().Query(cond, vals...)
+			row, err = sqldb.GetSlaveDB().QueryContext(daoSession.Ctx, cond, vals...)
 		}
 	}
 	d.CheckError(err)
@@ -151,7 +151,7 @@ func (d *Dao) SelectOne(useSlave bool, where map[string]interface{}) ModelInterf
 	d.CheckError(err)
 	var row *sql.Rows
 	if useSlave {
-		row, err = sqldb.GetSlaveDB().Query(cond, vals...)
+		row, err = sqldb.GetSlaveDB().QueryContext(d.GetDaoSession().Ctx, cond, vals...)
 	} else {
 		row, err = d.GetDaoSession().Query(cond, vals...)
 	}
@@ -165,7 +165,7 @@ func (d *Dao) SelectMulti(useSlave bool, where map[string]interface{}) []ModelIn
 	d.CheckError(err)
 	var row *sql.Rows
 	if useSlave {
-		row, err = sqldb.GetSlaveDB().Query(cond, vals...)
+		row, err = sqldb.GetSlaveDB().QueryContext(d.GetDaoSession().Ctx, cond, vals...)
 	} else {
 		row, err = d.GetDaoSession().Query(cond, vals...)
 	}

@@ -1,6 +1,7 @@
 package dao
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"github.com/x554462/gin-example/middleware/mango/library/database/sqldb"
@@ -21,10 +22,13 @@ type DaoSession struct {
 	tx            *sql.Tx
 	daoMap        sync.Map
 	daoModelCache *DaoLruCache
+	Ctx           context.Context
 }
 
-func GetDaoSession() *DaoSession {
-	return daoSessionPool.Get().(*DaoSession)
+func GetDaoSession(ctx context.Context) *DaoSession {
+	sess := daoSessionPool.Get().(*DaoSession)
+	sess.Ctx = ctx
+	return sess
 }
 
 func (ds *DaoSession) GetDao(model ModelInterface, daoInterface Interface) Interface {
@@ -47,7 +51,7 @@ func (ds *DaoSession) GetDao(model ModelInterface, daoInterface Interface) Inter
 func (ds *DaoSession) BeginTransaction() {
 	if ds.tx == nil {
 		var err error
-		if ds.tx, err = sqldb.GetMasterDB().Begin(); err != nil {
+		if ds.tx, err = sqldb.GetMasterDB().BeginTx(ds.Ctx, nil); err != nil {
 			logging.Warn(fmt.Sprintf("daoSession.BeginTransaction: %s\n", err.Error()))
 		}
 	} else {
@@ -85,16 +89,16 @@ func (ds *DaoSession) Close() {
 
 func (ds *DaoSession) Query(query string, args ...interface{}) (*sql.Rows, error) {
 	if ds.tx != nil {
-		return ds.tx.Query(query, args...)
+		return ds.tx.QueryContext(ds.Ctx, query, args...)
 	}
-	return sqldb.GetMasterDB().Query(query, args...)
+	return sqldb.GetMasterDB().QueryContext(ds.Ctx, query, args...)
 }
 
 func (ds *DaoSession) Exec(query string, args ...interface{}) (sql.Result, error) {
 	if ds.tx != nil {
-		return ds.tx.Exec(query, args...)
+		return ds.tx.ExecContext(ds.Ctx, query, args...)
 	}
-	return sqldb.GetMasterDB().Exec(query, args...)
+	return sqldb.GetMasterDB().ExecContext(ds.Ctx, query, args...)
 }
 
 func (ds *DaoSession) ClearAllCache() {

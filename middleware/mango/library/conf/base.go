@@ -14,17 +14,18 @@ type Server struct {
 	Addr         string
 	ReadTimeout  time.Duration
 	WriteTimeout time.Duration
+	HttpTimeout  time.Duration
 	RuntimePath  string
 	LogPath      string
 	LogName      string
 }
 
 type Database struct {
-	User       string
-	Password   string
-	Host       string
-	Port       int
-	Name       string
+	User     string
+	Password string
+	Host     string
+	Port     int
+	Name     string
 }
 type Redis struct {
 	Host     string
@@ -55,6 +56,7 @@ func init() {
 
 	ServerConf.ReadTimeout = ServerConf.ReadTimeout * time.Second
 	ServerConf.WriteTimeout = ServerConf.WriteTimeout * time.Second
+	ServerConf.HttpTimeout = ServerConf.HttpTimeout * time.Second
 }
 
 // mapTo map section

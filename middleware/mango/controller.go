@@ -33,7 +33,7 @@ func New() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		session := newSession(c.Request, c.Writer)
 		defer session.expiry()
-		daoSession := dao.GetDaoSession()
+		daoSession := dao.GetDaoSession(c.Request.Context())
 		defer daoSession.Close()
 		ctrl := &Controller{ginCtx: c, daoSession: daoSession, session: session}
 		defer func() {

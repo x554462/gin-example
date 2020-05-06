@@ -6,6 +6,7 @@ import (
 	"github.com/x554462/gin-example/app/router"
 	"github.com/x554462/gin-example/middleware/mango/library/conf"
 	"log"
+	"net/http"
 	"syscall"
 )
 
@@ -17,7 +18,12 @@ func main() {
 	endless.DefaultWriteTimeOut = conf.ServerConf.WriteTimeout
 	endless.DefaultMaxHeaderBytes = 1 << 20
 
-	server := endless.NewServer(conf.ServerConf.Addr, router.InitRouter())
+	var handler http.Handler
+	handler = router.InitRouter()
+	if conf.ServerConf.HttpTimeout != 0 {
+		handler = http.TimeoutHandler(handler, conf.ServerConf.HttpTimeout, "timeout")
+	}
+	server := endless.NewServer(conf.ServerConf.Addr, handler)
 	server.BeforeBegin = func(addr string) {
 		log.Printf("start http server listening %s, pid is %d", addr, syscall.Getpid())
 	}
